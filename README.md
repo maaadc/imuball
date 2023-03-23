@@ -1,2 +1,4 @@
 # imuball
-Control a Sphero Mini with the IMU on a Bosch Nicla Sense Me device via bluetooth
+Control a Sphero Mini robot with the Bosch IMU on a Nicla Sense Me device via bluetooth.
+
+Cheat sheet for the board: https://docs.arduino.cc/tutorials/nicla-sense-me/cheat-sheet
