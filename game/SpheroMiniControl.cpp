@@ -40,7 +40,24 @@ void SpheroMiniControl::loop(SensorXYZ &accel, SensorXYZ &gyro)
 
             this->connect();
 
-            this->color(0xff, 0xff, 0xff);
+            if (this->device && this->device.connected())
+            {
+                // blink green color at startup
+                this->color(0x00, 0xff, 0x00);
+                delay(1000);
+
+                // prepare manual aiming
+                this->color(0x00, 0x00, 0x00);
+                this->set_stabilization(false);
+                this->set_aiming_led(true);
+
+                Serial.println("... manually rotate robot.");
+                delay(5000);
+
+                this->set_aiming_led(false);
+                this->set_stabilization(true);
+                this->color(0x80, 0x00, 0x00);
+            }
 
             while (this->device && this->device.connected())
             {
@@ -51,7 +68,7 @@ void SpheroMiniControl::loop(SensorXYZ &accel, SensorXYZ &gyro)
                 float y = accel.y();
                 float z = accel.z();
                 float relative_tilt = sqrt(x * x + y * y) / sqrt(x * x + y * y + z * z);
-                const uint speed = 255. * relative_tilt;
+                const uint speed = 255. * 0.5 * max(0.1, relative_tilt);
 
                 // get angle in 0-360 deg range
                 const uint angle = (atan2(y, x) / 3.14159 + 1.) * 180.;
@@ -120,10 +137,33 @@ void SpheroMiniControl::move(const byte speed, const uint direction)
     Serial.print(", ");
     Serial.print(direction);
     Serial.println(")");
+
     const byte head1 = (0xff00 & direction) >> 8;
     const byte head0 = (0x00ff & direction);
     byte_vector cmd{0x8d, 0x0a, 0x16, 0x07, 0x00, speed,
                     head1, head0, 0x00, 0x00, 0xd8};
+    this->send_raw(this->uart, cmd);
+}
+
+void SpheroMiniControl::set_aiming_led(bool active)
+{
+    Serial.print("set_aiming_led(");
+    Serial.print(active);
+    Serial.println(")");
+
+    byte brightness = (active) ? 0xff : 0x00;
+    byte_vector cmd{0x8d, 0x0a, 0x1a, 0x0e, 0x00, 0x00, 0x01, brightness, 0x00, 0xd8};
+    this->send_raw(this->uart, cmd);
+}
+
+void SpheroMiniControl::set_stabilization(bool active)
+{
+    Serial.print("set_stabilization(");
+    Serial.print(active);
+    Serial.println(")");
+
+    byte value = active;
+    byte_vector cmd{0x8d, 0x0a, 0x16, 0x0c, 0x00, value, 0x00, 0xd8};
     this->send_raw(this->uart, cmd);
 }
 

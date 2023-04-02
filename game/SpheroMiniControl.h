@@ -30,6 +30,10 @@ private:
 
     void color(const byte red, const byte green, const byte blue);
 
+    void set_aiming_led(bool active);
+
+    void set_stabilization(bool active);
+
     void move(const byte speed, const uint direction);
 
     void execute(const bool command_success,
