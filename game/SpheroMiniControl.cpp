@@ -68,7 +68,7 @@ void SpheroMiniControl::loop(SensorXYZ &accel, SensorXYZ &gyro)
                 float y = accel.y();
                 float z = accel.z();
                 float relative_tilt = sqrt(x * x + y * y) / sqrt(x * x + y * y + z * z);
-                const uint speed = 255. * 0.5 * max(0.1, relative_tilt);
+                const uint speed = 255. * 1.0 * min(1.0, max(0, 1.3 * (relative_tilt - 0.05)));
 
                 // get angle in 0-360 deg range
                 const uint angle = (atan2(y, x) / 3.14159 + 1.) * 180.;
