@@ -47,16 +47,16 @@ void SpheroMiniControl::loop(SensorXYZ &accel, SensorXYZ &gyro)
                 delay(1000);
 
                 // prepare manual aiming
-                this->color(0x00, 0x00, 0x00);
                 this->set_stabilization(false);
                 this->set_aiming_led(true);
 
-                Serial.println("... manually rotate robot.");
-                delay(5000);
+                this->color(0x00, 0x00, 0x00);
 
-                this->set_aiming_led(false);
+                Serial.println("... manually rotate robot.");
+                delay(10000);
+
                 this->set_stabilization(true);
-                this->color(0x80, 0x00, 0x00);
+                this->set_aiming_led(true);
             }
 
             while (this->device && this->device.connected())
@@ -71,7 +71,7 @@ void SpheroMiniControl::loop(SensorXYZ &accel, SensorXYZ &gyro)
                 const uint speed = 255. * 1.0 * min(1.0, max(0, 1.3 * (relative_tilt - 0.05)));
 
                 // get angle in 0-360 deg range
-                const uint angle = (atan2(y, x) / 3.14159 + 1.) * 180.;
+                const uint angle = (atan2(x, y) / 3.14159 + 1.) * 180.;
                 this->move(speed, angle);
 
                 delay(50);
@@ -162,9 +162,22 @@ void SpheroMiniControl::set_stabilization(bool active)
     Serial.print(active);
     Serial.println(")");
 
-    byte value = active;
-    byte_vector cmd{0x8d, 0x0a, 0x16, 0x0c, 0x00, value, 0x00, 0xd8};
-    this->send_raw(this->uart, cmd);
+    byte_vector cmd1{0x8d, 0x0a, 0x1a, 0x0e, 0x00, 0x00, 0x0f, 0x00, 0x00, 0x00, 0x00, 0x00, 0xd8};
+    this->send_raw(this->uart, cmd1);
+
+    if (active)
+    {
+        byte_vector cmd2{0x8d, 0x0a, 0x16, 0x06, 0x00, 0x00, 0xd8};
+        this->send_raw(this->uart, cmd2);
+        byte_vector cmd3{0x8d, 0x0a, 0x1a, 0x19, 0x00, 0x00, 0xd8};
+        this->send_raw(this->uart, cmd3);
+    }
+    else
+    {
+        byte_vector cmd2{0x8d, 0x0a, 0x1a, 0x0e, 0x00, 0x00, 0x01, 0xff, 0x00, 0xd8};
+        this->send_raw(this->uart, cmd2);
+        this->move(0, 0);
+    }
 }
 
 void SpheroMiniControl::color(const byte red, const byte green,
